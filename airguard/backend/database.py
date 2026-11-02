@@ -49,6 +49,14 @@ def check_db_connection():
     except Exception as e:
         return {"status": "disconnected", "error": str(e)}
 
+def get_train_records_collection():
+    """Returns collection handle for 70% training split (17,395 docs)."""
+    return get_db()["train_records"]
+
+def get_test_records_collection():
+    """Returns collection handle for 30% testing split (7,455 docs)."""
+    return get_db()["test_records"]
+
 def close_db():
     """Gracefully closes MongoDB connection pool."""
     global _client, _db

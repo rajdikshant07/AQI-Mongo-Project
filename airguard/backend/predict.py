@@ -35,7 +35,7 @@ _SCALER = None
 
 
 def load_model(model_name="Logistic Regression"):
-    """Loads and caches the requested model artifact."""
+    """Loads and caches the Logistic Regression model and scaler."""
     global _MODELS_CACHE, _SCALER
     
     if _SCALER is None:
@@ -43,23 +43,16 @@ def load_model(model_name="Logistic Regression"):
             raise FileNotFoundError(f"Scaler not found at {SCALER_PATH}. Run train_models.py first.")
         _SCALER = joblib.load(SCALER_PATH)
         
-    model_slug_map = {
-        "Logistic Regression": "logistic_model.pkl",
-        "Decision Tree": "decision_tree.pkl",
-        "Random Forest": "random_forest.pkl",
-        "Support Vector Machine": "support_vector_machine.pkl",
-        "Gradient Boosting": "gradient_boosting.pkl"
-    }
-    
-    filename = model_slug_map.get(model_name, "logistic_model.pkl")
-    model_path = os.path.join(MODELS_DIR, filename)
-    
-    if model_name not in _MODELS_CACHE:
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model '{model_name}' not found at {model_path}.")
-        _MODELS_CACHE[model_name] = joblib.load(model_path)
+    model_path = os.path.join(MODELS_DIR, "logistic_model.pkl")
+    if not os.path.exists(model_path):
+        model_path = os.path.join(MODELS_DIR, "logistic_regression.pkl")
         
-    return _MODELS_CACHE[model_name], _SCALER
+    if "Logistic Regression" not in _MODELS_CACHE:
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Logistic Regression model not found at {model_path}.")
+        _MODELS_CACHE["Logistic Regression"] = joblib.load(model_path)
+        
+    return _MODELS_CACHE["Logistic Regression"], _SCALER
 
 
 def build_input_vector(raw_inputs):

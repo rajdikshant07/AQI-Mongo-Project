@@ -455,8 +455,8 @@ The inference engine in `airguard/backend/predict.py`:
 5. `/dataset` — **Dataset Explorer:** Searchable, paginated data grid across 24,850 records with multi-column filtering and CSV export.
 6. `/analytics` — **Pollution Analytics:** Time-series trends, seasonal risk cycles, multi-pollutant correlation heatmaps, and city rankings.
 7. `/predict` — **Risk Prediction Engine:** Interactive form with live ratio recalculation, scenario presets, risk meters, and feature contribution charts.
-8. `/ml-lab` — **Machine Learning Lab:** Interactive threshold tuning slider ($\tau \in [0.1, 0.9]$), algorithm switcher, and live confusion matrix recalculation.
-9. `/evaluation` — **Model Evaluation:** Multi-model comparative bar charts, ROC curves, log-loss rankings, and confusion matrix grids.
+8. `/ml-lab` — **Logistic Regression Lab:** Interactive decision threshold slider ($\tau \in [0.1, 0.9]$), Sigmoid S-curve mapping, logit formulation, and dynamic confusion matrix recalculation.
+9. `/evaluation` — **Model Evaluation:** Detailed Logistic Regression performance metrics, ROC curve ($AUC = 0.9553$), binary log-loss analysis ($0.2691$), and $2 \times 2$ confusion matrix grid.
 10. `/features` — **Feature Analysis:** Coefficient ranking graphs, odds ratio breakdown, and physical domain impact descriptions.
 11. `/history` — **Prediction History:** Paginated historical audit log loaded live from MongoDB `prediction_results` with search and delete actions.
 12. `/about` — **Methodology & About:** Complete 45-topic curriculum checklist, mathematical derivations, CPCB NAQI framework, and Viva Voce defense FAQ.

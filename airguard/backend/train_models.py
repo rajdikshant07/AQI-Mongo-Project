@@ -1,10 +1,18 @@
 """
-AirGuard: Phase 5 - Machine Learning Engine, Evaluation & Persistence Suite
-===========================================================================
-Implements the mandatory 70:30 stratified split, StandardScaler with data leakage
-prevention, Logistic Regression (Primary), Decision Tree, Random Forest, SVM,
-and Gradient Boosting. Computes all academic metrics, generates evaluation figures,
-and stores performance records in MongoDB.
+AirGuard: Phase 5 - Pure Logistic Regression Training, Evaluation & Persistence Suite
+=====================================================================================
+Dedicated exclusively to Logistic Regression conforming strictly to the academic
+reference: "Logistic Regression Through MongoDB – Theory, Mathematical Foundation,
+MongoDB Integration, Python Program, Model Evaluation and Final-Year Project Workflow".
+
+Implements:
+1. Mandatory 70:30 Stratified Split (random_state=42, stratify=y)
+2. StandardScaler (Zero Data Leakage - fit on train only)
+3. Binary Logistic Regression with L2 Regularization & L-BFGS solver
+4. Complete Mathematical Parameter Extraction: Intercept beta_0, Coefficients beta_j, Odds Ratios exp(beta_j)
+5. Comprehensive Academic Evaluation: Confusion Matrix, Accuracy, Precision, Recall, F1, ROC-AUC, Log Loss
+6. 300-DPI Publication Figures for Logistic Regression
+7. Storage of Evaluation Metrics in MongoDB collection 'model_evaluation'
 """
 
 import os
@@ -22,14 +30,10 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.svm import LinearSVC
-from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     roc_auc_score, log_loss, confusion_matrix, classification_report,
-    roc_curve, precision_recall_curve
+    roc_curve
 )
 from datetime import datetime
 
@@ -114,7 +118,7 @@ def prepare_train_test_split():
 
 def train_logistic_regression(X_train_scaled, y_train, X_test_scaled, y_test):
     """
-    Primary Model: Binary Logistic Regression
+    Trains Binary Logistic Regression:
     Mathematical Foundation:
     z = beta_0 + sum(beta_j * x_j)
     P(y=1|X) = 1 / (1 + e^-z)
@@ -122,7 +126,7 @@ def train_logistic_regression(X_train_scaled, y_train, X_test_scaled, y_test):
     Odds Ratio: exp(beta_j)
     """
     print("\n" + "=" * 85)
-    print("STEP 2: Training Primary Academic Model: Logistic Regression")
+    print("STEP 2: Training Academic Model: Logistic Regression")
     print("=" * 85)
     
     start_time = time.time()
@@ -155,362 +159,247 @@ def train_logistic_regression(X_train_scaled, y_train, X_test_scaled, y_test):
     }).sort_values(by="coefficient_beta", ascending=False)
     
     for idx, row in coef_df.iterrows():
-        sign = "+" if row["coefficient_beta"] >= 0 else "-"
         print(f"    - {row['feature']:18}: beta = {row['coefficient_beta']:+7.4f} | Odds Ratio = {row['odds_ratio']:6.3f}")
         
     # Save Model
     model_path = os.path.join(MODELS_DIR, "logistic_model.pkl")
     joblib.dump(lr, model_path)
+    # Also save as logistic_regression.pkl for convenience
+    joblib.dump(lr, os.path.join(MODELS_DIR, "logistic_regression.pkl"))
     print(f"\n[SAVED] Logistic Regression model serialized to: {model_path}")
     
     return lr, y_pred, y_prob, train_time, coef_df
 
 
-def train_comparison_models(X_train_scaled, y_train, X_test_scaled, y_test):
+def evaluate_logistic_regression(y_test, y_pred, y_prob, train_time):
     """
-    Trains additional classification algorithms on the identical 70:30 partition:
-    1. Decision Tree Classifier
-    2. Random Forest Classifier
-    3. Support Vector Machine (Linear with Platt probability calibration)
-    4. Gradient Boosting Classifier
-    """
-    print("\n" + "=" * 85)
-    print("STEP 3: Training Comparison Algorithms (Identical Experimental Partitions)")
-    print("=" * 85)
-    
-    models = {
-        "Decision Tree": DecisionTreeClassifier(
-            max_depth=10,
-            min_samples_split=20,
-            random_state=42
-        ),
-        "Random Forest": RandomForestClassifier(
-            n_estimators=100,
-            max_depth=15,
-            min_samples_split=10,
-            n_jobs=-1,
-            random_state=42
-        ),
-        "Support Vector Machine": CalibratedClassifierCV(
-            estimator=LinearSVC(C=1.0, random_state=42, max_iter=2000),
-            cv=3
-        ),
-        "Gradient Boosting": GradientBoostingClassifier(
-            n_estimators=100,
-            learning_rate=0.1,
-            max_depth=5,
-            random_state=42
-        )
-    }
-    
-    results = {}
-    
-    for name, clf in models.items():
-        print(f"[*] Training {name}...")
-        start_time = time.time()
-        clf.fit(X_train_scaled, y_train)
-        t_time = time.time() - start_time
-        
-        y_pred = clf.predict(X_test_scaled)
-        if hasattr(clf, "predict_proba"):
-            y_prob = clf.predict_proba(X_test_scaled)[:, 1]
-        else:
-            y_prob = clf.decision_function(X_test_scaled)
-            
-        # Serialize model
-        file_slug = name.lower().replace(" ", "_")
-        m_path = os.path.join(MODELS_DIR, f"{file_slug}.pkl")
-        joblib.dump(clf, m_path)
-        print(f"    - Completed in {t_time:.3f}s | Serialized to: {m_path}")
-        
-        results[name] = {
-            "model": clf,
-            "y_pred": y_pred,
-            "y_prob": y_prob,
-            "train_time": t_time
-        }
-        
-    return results
-
-
-def evaluate_all_models(all_predictions, y_test):
-    """
-    Computes rigorous academic evaluation metrics:
+    Computes rigorous academic evaluation metrics for Logistic Regression:
     - Confusion Matrix (TP, TN, FP, FN)
     - Accuracy, Precision, Recall, F1 Score
     - ROC-AUC, Log Loss
-    - Compiles empirical comparison table
     """
     print("\n" + "=" * 85)
-    print("STEP 4: Empirical Model Evaluation & Comparative Performance Table")
+    print("STEP 3: Empirical Model Evaluation & Academic Performance Metrics")
     print("=" * 85)
     
-    comparison_records = []
-    detailed_metrics = {}
+    cm = confusion_matrix(y_test, y_pred)
+    tn, fp, fn, tp = cm.ravel()
     
-    for name, data in all_predictions.items():
-        y_pred = data["y_pred"]
-        y_prob = data["y_prob"]
-        t_time = data["train_time"]
-        
-        cm = confusion_matrix(y_test, y_pred)
-        tn, fp, fn, tp = cm.ravel()
-        
-        acc = accuracy_score(y_test, y_pred)
-        prec = precision_score(y_test, y_pred)
-        rec = recall_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred)
-        roc = roc_auc_score(y_test, y_prob)
-        ll = log_loss(y_test, y_prob)
-        
-        detailed_metrics[name] = {
-            "accuracy": round(float(acc), 4),
-            "precision": round(float(prec), 4),
-            "recall": round(float(rec), 4),
-            "f1_score": round(float(f1), 4),
-            "roc_auc": round(float(roc), 4),
-            "log_loss": round(float(ll), 4),
-            "confusion_matrix": {
-                "tp": int(tp), "tn": int(tn), "fp": int(fp), "fn": int(fn)
-            },
-            "training_time_sec": round(float(t_time), 4),
-            "classification_report": classification_report(y_test, y_pred, output_dict=True)
-        }
-        
-        comparison_records.append({
-            "Algorithm": name,
-            "Accuracy": acc,
-            "Precision": prec,
-            "Recall": rec,
-            "F1-Score": f1,
-            "ROC-AUC": roc,
-            "Log Loss": ll,
-            "Train Time (s)": t_time
-        })
-        
-    df_compare = pd.DataFrame(comparison_records).sort_values(by="F1-Score", ascending=False)
+    acc = accuracy_score(y_test, y_pred)
+    prec = precision_score(y_test, y_pred, zero_division=0)
+    rec = recall_score(y_test, y_pred, zero_division=0)
+    f1 = f1_score(y_test, y_pred, zero_division=0)
+    auc = roc_auc_score(y_test, y_prob)
+    loss = log_loss(y_test, y_prob)
     
-    # Print Clean Academic Comparison Table
-    print("\n" + "-" * 95)
-    print(f"{'Algorithm':<24} | {'Accuracy':<8} | {'Precision':<9} | {'Recall':<8} | {'F1-Score':<8} | {'ROC-AUC':<8} | {'Time (s)':<8}")
-    print("-" * 95)
-    for _, row in df_compare.iterrows():
-        print(f"{row['Algorithm']:<24} | {row['Accuracy']*100:6.2f}%  | {row['Precision']*100:7.2f}%  | {row['Recall']*100:6.2f}%  | {row['F1-Score']*100:6.2f}%  | {row['ROC-AUC']:8.4f} | {row['Train Time (s)']:8.3f}")
-    print("-" * 95)
+    metrics = {
+        "model_name": "Logistic Regression",
+        "is_primary_model": True,
+        "accuracy": round(float(acc), 4),
+        "precision": round(float(prec), 4),
+        "recall": round(float(rec), 4),
+        "f1_score": round(float(f1), 4),
+        "roc_auc": round(float(auc), 4),
+        "log_loss": round(float(loss), 4),
+        "train_time_sec": round(float(train_time), 4),
+        "inference_latency_ms": round(float(train_time / len(y_test) * 1000), 4),
+        "confusion_matrix": {
+            "tn": int(tn), "fp": int(fp),
+            "fn": int(fn), "tp": int(tp)
+        },
+        "evaluated_at": datetime.utcnow()
+    }
     
-    return df_compare, detailed_metrics
+    print(f"[*] Accuracy             : {acc*100:.2f}%")
+    print(f"[*] Precision (PPV)      : {prec*100:.2f}%")
+    print(f"[*] Recall (Sensitivity) : {rec*100:.2f}%")
+    print(f"[*] F1 Score             : {f1*100:.2f}%")
+    print(f"[*] ROC-AUC Score        : {auc:.4f}")
+    print(f"[*] Binary Log Loss      : {loss:.4f}")
+    print(f"[*] Confusion Matrix     : TN={tn:,}, FP={fp:,}, FN={fn:,}, TP={tp:,}")
+    print("\n[*] Classification Report:\n" + classification_report(y_test, y_pred, target_names=["Lower Risk (0)", "Elevated Risk (1)"]))
+    
+    return metrics
 
 
-def generate_evaluation_visualizations(all_predictions, y_test, df_compare, coef_df):
+def generate_evaluation_visualizations(y_test, y_pred, y_prob, coef_df):
     """
-    Generates publication-quality evaluation figures:
-    1. Figure 7: Multi-panel Confusion Matrices
-    2. Figure 8: Combined ROC Curves (All Models)
-    3. Figure 9: Performance Metrics Comparison Bar Chart
-    4. Figure 10: Logistic Regression Coefficients & Odds Ratios
+    Renders high-resolution (300 DPI) publication figures for Logistic Regression:
+    - 07_confusion_matrices.png: 2x2 Confusion Matrix with Type I/II annotations
+    - 08_roc_curves.png: ROC Curve with AUC score
+    - 09_model_metrics_comparison.png: Logistic Regression Performance Metric Bar
+    - 10_logistic_coefficients.png: Standardized Coefficients & Odds Ratios
     """
     print("\n" + "=" * 85)
-    print("STEP 5: Generating Evaluation Figures & ROC Curves")
+    print("STEP 4: Rendering High-Resolution (300 DPI) Evaluation Visualizations")
     print("=" * 85)
     
-    # --------------------------------------------------------------------------
-    # Figure 7: Confusion Matrices
-    # --------------------------------------------------------------------------
-    print("    [*] Generating Figure 7: Confusion Matrices...")
-    fig, axes = plt.subplots(1, len(all_predictions), figsize=(20, 4.5))
-    for ax, (name, data) in zip(axes, all_predictions.items()):
-        cm = confusion_matrix(y_test, data["y_pred"])
-        sns.heatmap(
-            cm, annot=True, fmt="d", cmap="Blues", cbar=False, ax=ax,
-            xticklabels=["Lower (0)", "Elevated (1)"],
-            yticklabels=["Lower (0)", "Elevated (1)"]
-        )
-        ax.set_title(name, fontweight="bold", fontsize=11)
-        ax.set_xlabel("Predicted Label")
-        ax.set_ylabel("True Label")
-    fig.suptitle("AirGuard: Confusion Matrices on 30% Unseen Test Set (N = 7,455)", fontsize=13, fontweight="bold", y=1.03)
-    plt.tight_layout()
-    out_cm = os.path.join(FIGURES_DIR, "07_confusion_matrices.png")
-    plt.savefig(out_cm, dpi=300, bbox_inches="tight")
-    plt.close()
-    print(f"        Saved to: {out_cm}")
-
-    # --------------------------------------------------------------------------
-    # Figure 8: ROC Curves
-    # --------------------------------------------------------------------------
-    print("    [*] Generating Figure 8: Multi-Model ROC Curves...")
-    plt.figure(figsize=(9, 7))
-    colors = ["#2563eb", "#d97706", "#059669", "#7c3aed", "#dc2626"]
+    sns.set_theme(style="whitegrid", palette="muted")
     
-    for (name, data), color in zip(all_predictions.items(), colors):
-        fpr, tpr, _ = roc_curve(y_test, data["y_prob"])
-        auc = roc_auc_score(y_test, data["y_prob"])
-        plt.plot(fpr, tpr, color=color, linewidth=2.2, label=f"{name} (AUC = {auc:.4f})")
-        
-    plt.plot([0, 1], [0, 1], "k--", linewidth=1.2, label="Random Classifier (AUC = 0.5000)")
-    plt.title("AirGuard: Receiver Operating Characteristic (ROC) Curve Comparison", fontsize=13, fontweight="bold", pad=12)
-    plt.xlabel("False Positive Rate (1 - Specificity)")
-    plt.ylabel("True Positive Rate (Sensitivity / Recall)")
-    plt.legend(loc="lower right", frameon=True, fontsize=10)
-    plt.grid(True, linestyle=":", alpha=0.6)
-    plt.tight_layout()
-    out_roc = os.path.join(FIGURES_DIR, "08_roc_curves.png")
-    plt.savefig(out_roc, dpi=300)
-    plt.close()
-    print(f"        Saved to: {out_roc}")
-
     # --------------------------------------------------------------------------
-    # Figure 9: Performance Metrics Comparison
+    # Figure 1: Logistic Regression Confusion Matrix
     # --------------------------------------------------------------------------
-    print("    [*] Generating Figure 9: Performance Metrics Bar Chart...")
-    metrics_melted = pd.melt(
-        df_compare,
-        id_vars=["Algorithm"],
-        value_vars=["Accuracy", "Precision", "Recall", "F1-Score", "ROC-AUC"],
-        var_name="Metric",
-        value_name="Score"
-    )
-    plt.figure(figsize=(12, 6))
-    sns.barplot(x="Metric", y="Score", hue="Algorithm", data=metrics_melted, palette="Set2", edgecolor="black")
-    plt.title("AirGuard: Multi-Model Metric Comparison on Held-Out Test Set (30%)", fontsize=13, fontweight="bold", pad=12)
-    plt.ylabel("Score (0.0 to 1.0)")
-    plt.ylim(0.70, 1.02)
-    plt.legend(loc="lower right", frameon=True)
-    plt.tight_layout()
-    out_comp = os.path.join(FIGURES_DIR, "09_model_metrics_comparison.png")
-    plt.savefig(out_comp, dpi=300)
-    plt.close()
-    print(f"        Saved to: {out_comp}")
-
-    # --------------------------------------------------------------------------
-    # Figure 10: Logistic Regression Coefficients & Odds Ratios
-    # --------------------------------------------------------------------------
-    print("    [*] Generating Figure 10: Logistic Regression Coefficients & Odds Ratios...")
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+    fig, ax = plt.subplots(figsize=(7, 6))
+    cm = confusion_matrix(y_test, y_pred)
+    tn, fp, fn, tp = cm.ravel()
+    total = len(y_test)
     
-    # Beta Coefficients
-    colors_beta = ["#dc2626" if c > 0 else "#2563eb" for c in coef_df["coefficient_beta"]]
-    ax1.barh(coef_df["feature"], coef_df["coefficient_beta"], color=colors_beta, edgecolor="black")
-    ax1.axvline(0, color="black", linestyle="-", linewidth=1.0)
-    ax1.set_title("Logistic Regression Weights (β Coefficients)", fontweight="bold")
-    ax1.set_xlabel("Coefficient Value (Change in Log-Odds)")
-    ax1.invert_yaxis()
+    annot_matrix = np.array([
+        [f"True Negative (TN)\n{tn:,}\n({tn/total*100:.1f}%)", f"False Positive (FP - Type I)\n{fp:,}\n({fp/total*100:.1f}%)"],
+        [f"False Negative (FN - Type II)\n{fn:,}\n({fn/total*100:.1f}%)", f"True Positive (TP)\n{tp:,}\n({tp/total*100:.1f}%)"]
+    ])
     
-    # Odds Ratios
-    ax2.barh(coef_df["feature"], coef_df["odds_ratio"], color="#059669", edgecolor="black")
-    ax2.axvline(1.0, color="red", linestyle="--", linewidth=1.5, label="Baseline Odds Ratio (OR = 1.0)")
-    ax2.set_title("Odds Ratios [exp(β)] (Multiplicative Risk Factor)", fontweight="bold")
-    ax2.set_xlabel("Odds Ratio Value")
-    ax2.invert_yaxis()
-    ax2.legend(loc="lower right")
-    
-    fig.suptitle("AirGuard Primary Academic Model: Logistic Regression Parameter Analysis", fontsize=14, fontweight="bold", y=0.98)
+    sns.heatmap(cm, annot=annot_matrix, fmt="", cmap="Blues", cbar=True, ax=ax,
+                xticklabels=["Predicted Lower (0)", "Predicted Elevated (1)"],
+                yticklabels=["Actual Lower (0)", "Actual Elevated (1)"],
+                annot_kws={"size": 11, "weight": "bold"})
+    ax.set_title("AirGuard: Logistic Regression Confusion Matrix\n(30% Held-Out Test Set, N = 7,455)", fontsize=13, weight="bold", pad=12)
     plt.tight_layout()
-    out_coef = os.path.join(FIGURES_DIR, "10_logistic_coefficients.png")
-    plt.savefig(out_coef, dpi=300)
+    fig1_path = os.path.join(FIGURES_DIR, "07_confusion_matrices.png")
+    plt.savefig(fig1_path, dpi=300)
     plt.close()
-    print(f"        Saved to: {out_coef}")
+    print(f"    [SAVED] {fig1_path}")
+    
+    # --------------------------------------------------------------------------
+    # Figure 2: ROC Curve for Logistic Regression
+    # --------------------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(7, 6))
+    fpr, tpr, _ = roc_curve(y_test, y_prob)
+    auc_score = roc_auc_score(y_test, y_prob)
+    
+    ax.plot(fpr, tpr, color="#2563eb", lw=2.5, label=f"Logistic Regression (AUC = {auc_score:.4f})")
+    ax.plot([0, 1], [0, 1], color="#94a3b8", lw=1.5, linestyle="--", label="Random Chance (AUC = 0.5000)")
+    ax.set_xlim([-0.02, 1.02])
+    ax.set_ylim([-0.02, 1.05])
+    ax.set_xlabel("False Positive Rate (1 - Specificity)", fontsize=11, weight="bold")
+    ax.set_ylabel("True Positive Rate (Sensitivity / Recall)", fontsize=11, weight="bold")
+    ax.set_title("AirGuard: Receiver Operating Characteristic (ROC) Curve\nLogistic Regression Model", fontsize=13, weight="bold", pad=12)
+    ax.legend(loc="lower right", frameon=True, fontsize=10)
+    plt.tight_layout()
+    fig2_path = os.path.join(FIGURES_DIR, "08_roc_curves.png")
+    plt.savefig(fig2_path, dpi=300)
+    plt.close()
+    print(f"    [SAVED] {fig2_path}")
+    
+    # --------------------------------------------------------------------------
+    # Figure 3: Performance Metric Overview
+    # --------------------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(8, 5))
+    acc = accuracy_score(y_test, y_pred)
+    prec = precision_score(y_test, y_pred)
+    rec = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    auc = roc_auc_score(y_test, y_prob)
+    
+    metrics_names = ["Accuracy", "Precision", "Recall", "F1 Score", "ROC-AUC"]
+    metrics_vals = [acc * 100, prec * 100, rec * 100, f1 * 100, auc * 100]
+    colors = ["#10b981", "#3b82f6", "#6366f1", "#8b5cf6", "#ec4899"]
+    
+    bars = ax.bar(metrics_names, metrics_vals, color=colors, width=0.55, edgecolor="none")
+    ax.set_ylim([70, 100])
+    ax.set_ylabel("Score (%)", fontsize=11, weight="bold")
+    ax.set_title("AirGuard: Logistic Regression Evaluation Summary Metrics", fontsize=13, weight="bold", pad=12)
+    for bar in bars:
+        h = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, h + 0.6, f"{h:.2f}%", ha="center", va="bottom", fontsize=10, weight="bold")
+    plt.tight_layout()
+    fig3_path = os.path.join(FIGURES_DIR, "09_model_metrics_comparison.png")
+    plt.savefig(fig3_path, dpi=300)
+    plt.close()
+    print(f"    [SAVED] {fig3_path}")
+    
+    # --------------------------------------------------------------------------
+    # Figure 4: Logistic Regression Standardized Coefficients
+    # --------------------------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(10, 6))
+    plot_df = coef_df.sort_values(by="coefficient_beta", ascending=True)
+    colors = ["#ef4444" if b > 0 else "#10b981" for b in plot_df["coefficient_beta"]]
+    
+    bars = ax.barh(plot_df["feature"], plot_df["coefficient_beta"], color=colors, height=0.65)
+    ax.axvline(0, color="#64748b", lw=1.2, linestyle="--")
+    ax.set_xlabel("Standardized Logistic Regression Coefficient (beta)", fontsize=11, weight="bold")
+    ax.set_title("AirGuard: Feature Impact on Log-Odds of Elevated Pollution Risk\n(Positive beta = Increases Risk | Negative beta = Decreases Risk)", fontsize=12, weight="bold", pad=12)
+    for bar in bars:
+        w = bar.get_width()
+        offset = 0.15 if w >= 0 else -0.45
+        ax.text(w + offset, bar.get_y() + bar.get_height() / 2, f"{w:+.2f}", va="center", fontsize=9, weight="bold", color="#334155")
+    plt.tight_layout()
+    fig4_path = os.path.join(FIGURES_DIR, "10_logistic_coefficients.png")
+    plt.savefig(fig4_path, dpi=300)
+    plt.close()
+    print(f"    [SAVED] {fig4_path}")
 
 
-def store_model_evaluations_in_mongodb(detailed_metrics, df_compare):
+def persist_evaluation_in_mongodb(metrics):
     """
-    Stores model evaluations in MongoDB 'model_evaluation' and training metadata in 'training_history'.
+    Persists evaluation metrics and training history into MongoDB collections:
+    1. 'model_evaluation': Benchmark record for Logistic Regression.
+    2. 'training_history': Experiment log capturing split counts and random_state=42.
     """
     print("\n" + "=" * 85)
-    print("STEP 6: Storing Evaluation Results & Training History into MongoDB")
+    print("STEP 5: Persisting Model Evaluation & Experiment History in MongoDB")
     print("=" * 85)
     
     db = get_db()
     eval_coll = db[Config.COLL_MODEL_EVALUATION]
-    history_coll = db[Config.COLL_TRAINING_HISTORY]
+    hist_coll = db[Config.COLL_TRAINING_HISTORY]
     
-    eval_coll.delete_many({}) # Refresh current evaluations
-    history_coll.delete_many({})
+    # 1. Reset and insert single model evaluation
+    eval_coll.drop()
+    res_eval = eval_coll.insert_one(metrics)
+    print(f"[+] Persisted Logistic Regression evaluation in '{Config.COLL_MODEL_EVALUATION}': _id={res_eval.inserted_id}")
     
-    eval_docs = []
-    for name, metrics in detailed_metrics.items():
-        doc = {
-            "model_name": name,
-            "accuracy": metrics["accuracy"],
-            "precision": metrics["precision"],
-            "recall": metrics["recall"],
-            "f1_score": metrics["f1_score"],
-            "roc_auc": metrics["roc_auc"],
-            "log_loss": metrics["log_loss"],
-            "confusion_matrix": metrics["confusion_matrix"],
-            "classification_report": metrics["classification_report"],
-            "training_time_sec": metrics["training_time_sec"],
-            "is_primary_model": (name == "Logistic Regression"),
-            "evaluated_at": datetime.utcnow()
-        }
-        eval_docs.append(doc)
-        
-    eval_coll.insert_many(eval_docs)
-    print(f"    [SUCCESS] Ingested {len(eval_docs)} model evaluation records into '{Config.COLL_MODEL_EVALUATION}'.")
-    
-    # Store Training History
-    training_doc = {
-        "experiment_id": f"EXP_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+    # 2. Log Training History Experiment
+    experiment_doc = {
+        "experiment_id": f"EXP_LR_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
         "dataset_name": "CPCB India Air Quality Dataset (2015-2020)",
+        "model_trained": "Logistic Regression",
+        "split_ratio": "70:30",
+        "stratified": True,
+        "random_state": 42,
         "total_records": 24850,
         "train_records": 17395,
         "test_records": 7455,
-        "split_ratio": "70:30",
-        "random_state": 42,
-        "stratified": True,
         "features": FEATURE_COLUMNS,
         "target": TARGET_COLUMN,
-        "models_trained": list(detailed_metrics.keys()),
-        "champion_model": df_compare.iloc[0]["Algorithm"],
-        "champion_f1_score": round(float(df_compare.iloc[0]["F1-Score"]), 4),
+        "accuracy": metrics["accuracy"],
+        "f1_score": metrics["f1_score"],
+        "roc_auc": metrics["roc_auc"],
+        "log_loss": metrics["log_loss"],
         "trained_at": datetime.utcnow()
     }
-    history_coll.insert_one(training_doc)
-    print(f"    [SUCCESS] Ingested training experiment history into '{Config.COLL_TRAINING_HISTORY}'.")
     
-    # Save summary JSON for frontend
-    out_json = os.path.join(REPORTS_DIR, "model_comparison_metrics.json")
-    with open(out_json, "w") as f:
-        json.dump(detailed_metrics, f, indent=4)
-    print(f"    [SAVED] Comparison metrics written to: {out_json}")
+    hist_coll.drop()
+    res_hist = hist_coll.insert_one(experiment_doc)
+    print(f"[+] Persisted training experiment in '{Config.COLL_TRAINING_HISTORY}': _id={res_hist.inserted_id}")
 
 
-def run_full_training_pipeline():
-    """Orchestrates Phase 5 training, evaluation, visualization, and database storage."""
+def main():
+    print("\n" + "=" * 85)
+    print("AIRGUARD: PHASE 5 - PURE LOGISTIC REGRESSION TRAINING & EVALUATION ENGINE")
+    print("=" * 85)
+    
+    # 1. Data Prep (70:30 Split & StandardScaler)
     X_train, X_test, X_train_scaled, X_test_scaled, y_train, y_test, scaler = prepare_train_test_split()
     
-    # Train Primary Model
-    lr, y_pred_lr, y_prob_lr, lr_time, coef_df = train_logistic_regression(
+    # 2. Train Logistic Regression
+    lr, y_pred, y_prob, train_time, coef_df = train_logistic_regression(
         X_train_scaled, y_train, X_test_scaled, y_test
     )
     
-    # Train Comparison Models
-    comp_results = train_comparison_models(X_train_scaled, y_train, X_test_scaled, y_test)
+    # 3. Comprehensive Evaluation
+    metrics = evaluate_logistic_regression(y_test, y_pred, y_prob, train_time)
     
-    # Aggregate Predictions
-    all_predictions = {
-        "Logistic Regression": {
-            "model": lr,
-            "y_pred": y_pred_lr,
-            "y_prob": y_prob_lr,
-            "train_time": lr_time
-        }
-    }
-    all_predictions.update(comp_results)
+    # 4. Generate Visualizations (300 DPI)
+    generate_evaluation_visualizations(y_test, y_pred, y_prob, coef_df)
     
-    # Evaluate Models
-    df_compare, detailed_metrics = evaluate_all_models(all_predictions, y_test)
-    
-    # Generate Visualizations
-    generate_evaluation_visualizations(all_predictions, y_test, df_compare, coef_df)
-    
-    # Store in MongoDB
-    store_model_evaluations_in_mongodb(detailed_metrics, df_compare)
+    # 5. Persist to MongoDB
+    persist_evaluation_in_mongodb(metrics)
     
     print("\n" + "=" * 85)
-    print("PHASE 5 MACHINE LEARNING ENGINE & COMPARISON SUITE COMPLETE!")
+    print("[SUCCESS] PURE LOGISTIC REGRESSION TRAINING & PERSISTENCE COMPLETE!")
     print("=" * 85)
 
 
 if __name__ == "__main__":
-    run_full_training_pipeline()
+    main()

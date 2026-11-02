@@ -72,12 +72,27 @@ def run_prediction_tests():
     print(f"    - Persisted _id  : {res_smog_lr.get('_id')}")
 
     # --------------------------------------------------------------------------
-    # Scenario 3: Multi-Model Inference Comparison (Gradient Boosting & Random Forest)
+    # Scenario 3: Urban Moderate Air (Near Decision Boundary)
     # --------------------------------------------------------------------------
-    print("\n[SCENARIO 3: Multi-Model Inference Comparison on Smog Episode]")
-    for m_name in ["Random Forest", "Gradient Boosting"]:
-        res_comp = predict_air_quality_risk(smog_sample, model_name=m_name, station_or_city="Anand Vihar, Delhi")
-        print(f"    - {m_name:<20}: Risk={res_comp['predicted_risk']} | P(Elevated)={res_comp['probability']*100:6.2f}% | ID={res_comp.get('_id')}")
+    moderate_sample = {
+        "city": "Bengaluru",
+        "pm25": 55.0,
+        "pm10": 95.0,
+        "no": 15.0,
+        "no2": 28.0,
+        "co": 0.95,
+        "so2": 11.0,
+        "o3": 32.0,
+        "month": 3,
+        "is_weekend": 0
+    }
+    print("\n[SCENARIO 3: Urban Moderate Air (Logistic Regression Boundary Analysis)]")
+    res_mod = predict_air_quality_risk(moderate_sample, model_name="Logistic Regression", station_or_city="BTM Layout, Bengaluru")
+    print(f"    - Model: {res_mod['model_name']}")
+    print(f"    - Predicted Risk: {res_mod['predicted_risk']} ({res_mod['risk_category']})")
+    print(f"    - P(Lower Risk)  : {res_mod['probabilities']['lower_risk']*100:.2f}%")
+    print(f"    - P(Elevated Risk): {res_mod['probabilities']['elevated_risk']*100:.2f}%")
+    print(f"    - Persisted _id  : {res_mod.get('_id')}")
 
     # --------------------------------------------------------------------------
     # Scenario 4: MongoDB Prediction History Retrieval & Filtering

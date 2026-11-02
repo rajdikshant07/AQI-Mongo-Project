@@ -51,21 +51,12 @@ export default function ModelEvaluationPage() {
           </p>
         </div>
 
-        {/* Model Selector Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#0B0F19] border border-white/10">
-          {models.map((m) => (
-            <button
-              key={m.model_name}
-              onClick={() => setSelectedModelName(m.model_name)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                selectedModelName === m.model_name
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              {m.model_name}
-            </button>
-          ))}
+        {/* Active Model Indicator */}
+        <div className="flex items-center gap-2">
+          <div className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Logistic Regression (Active Model)</span>
+          </div>
         </div>
       </div>
 

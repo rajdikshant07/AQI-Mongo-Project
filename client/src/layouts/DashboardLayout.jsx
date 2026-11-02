@@ -27,7 +27,7 @@ const NAV_ITEMS = [
   { path: '/dataset', label: 'Dataset Explorer', icon: Database, count: '24.8k' },
   { path: '/analytics', label: 'Pollution Analytics', icon: BarChart3 },
   { path: '/predict', label: 'Risk Prediction', icon: BrainCircuit, highlight: true },
-  { path: '/ml-lab', label: 'ML Laboratory', icon: FlaskConical },
+  { path: '/ml-lab', label: 'Logistic Reg Lab', icon: FlaskConical },
   { path: '/evaluation', label: 'Model Evaluation', icon: Sliders },
   { path: '/features', label: 'Feature Analysis', icon: Sparkles },
   { path: '/history', label: 'Prediction History', icon: Clock },

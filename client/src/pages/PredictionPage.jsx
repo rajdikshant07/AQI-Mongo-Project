@@ -162,20 +162,13 @@ export default function PredictionPage() {
               </p>
             </div>
 
-            {/* Model Selector */}
+            {/* Active Model Badge */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 font-medium">Model:</span>
-              <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-xs font-semibold focus:outline-none focus:border-emerald-500"
-              >
-                <option value="Logistic Regression">Logistic Regression (Primary)</option>
-                <option value="Gradient Boosting">Gradient Boosting (Champion)</option>
-                <option value="Random Forest">Random Forest</option>
-                <option value="Decision Tree">Decision Tree</option>
-                <option value="Support Vector Machine">Support Vector Machine</option>
-              </select>
+              <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
+                <BrainCircuit className="w-3.5 h-3.5" />
+                <span>Logistic Regression</span>
+              </div>
             </div>
           </div>
 
