@@ -19,6 +19,7 @@ import airguardApi from '../services/api';
 export default function DashboardPage() {
   const [stats, setStats] = useState(null);
   const [rankings, setRankings] = useState([]);
+  const [showAllCities, setShowAllCities] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -29,10 +30,10 @@ export default function DashboardPage() {
       setError(null);
       const [statsRes, rankingsRes] = await Promise.all([
         airguardApi.getDashboardStats(),
-        airguardApi.getCityRankings(6),
+        airguardApi.getCityRankings(30),
       ]);
       setStats(statsRes.data);
-      setRankings(rankingsRes.data);
+      setRankings(rankingsRes.data || []);
     } catch (err) {
       console.error(err);
       setError(err.message || 'Failed to connect to AirGuard backend');
@@ -225,35 +226,43 @@ export default function DashboardPage() {
 
         {/* City Pollution Rankings Bar Chart */}
         <div className="lg:col-span-2 p-5 rounded-2xl bg-[#0B0F19] border border-white/10 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-emerald-400" />
-                Top Cities by Mean PM2.5 Concentration
+                {showAllCities ? 'All 26 Metropolitan Centers by PM2.5' : 'Top 8 Cities by Mean PM2.5 Concentration'}
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 Aggregated via MongoDB aggregation pipeline ($group, $avg, $sort).
               </p>
             </div>
-            <button
-              onClick={() => navigate('/analytics')}
-              className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1"
-            >
-              <span>Full Analytics</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAllCities(!showAllCities)}
+                className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-emerald-400 text-xs font-semibold border border-white/10 transition"
+              >
+                {showAllCities ? 'Show Top 8' : 'Show All 26'}
+              </button>
+              <button
+                onClick={() => navigate('/monitoring')}
+                className="text-xs text-slate-300 hover:text-white font-medium flex items-center gap-1"
+              >
+                <span>City Monitor</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
+              </button>
+            </div>
           </div>
 
-          <div className="h-64 my-2">
+          <div className={showAllCities ? "h-96 my-2" : "h-64 my-2"}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={rankings} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+              <BarChart data={showAllCities ? rankings : rankings.slice(0, 8)} layout="vertical" margin={{ top: 5, right: 30, left: 45, bottom: 5 }}>
                 <XAxis type="number" stroke="#64748b" fontSize={10} unit=" µg" />
-                <YAxis dataKey="city" type="category" stroke="#cbd5e1" fontSize={11} width={80} />
+                <YAxis dataKey="city" type="category" stroke="#cbd5e1" fontSize={10} width={90} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.75rem', fontSize: '11px' }}
                   formatter={(val, name) => [`${val} µg/m³`, name === 'avg_pm25' ? 'Mean PM2.5' : 'Mean PM10']}
                 />
-                <Bar dataKey="avg_pm25" fill="#059669" radius={[0, 6, 6, 0]} barSize={16} />
+                <Bar dataKey="avg_pm25" fill="#059669" radius={[0, 6, 6, 0]} barSize={showAllCities ? 10 : 16} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -262,6 +271,57 @@ export default function DashboardPage() {
             <span>Highest Polluted Metropolitan Center: <strong className="text-white">{stats?.extremes?.most_polluted_city}</strong></span>
             <span className="text-emerald-400 font-mono">CPCB Permissible: 60 µg/m³</span>
           </div>
+        </div>
+      </div>
+
+      {/* All 26 Metropolitan Cities Quick Overview Grid */}
+      <div className="p-5 rounded-2xl bg-[#0B0F19] border border-white/10 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-emerald-400" />
+              All 26 CPCB Metropolitan Centers Overview
+            </h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Click any city pill to inspect historical daily records or locate on GIS map.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/map')}
+            className="flex items-center gap-1.5 px-3 py-1 bg-white/5 hover:bg-white/10 text-emerald-400 rounded-lg text-xs font-medium border border-white/10 transition"
+          >
+            <span>Open GIS Map</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 pt-1">
+          {rankings.map((c) => {
+            const isElevated = c.risk_class === 1;
+            return (
+              <div
+                key={c.city}
+                onClick={() => navigate(`/monitoring?city=${encodeURIComponent(c.city)}`)}
+                className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/40 hover:bg-white/[0.05] cursor-pointer transition text-left group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-xs text-white group-hover:text-emerald-400 transition truncate">
+                    {c.city}
+                  </span>
+                  <span className={`w-2 h-2 rounded-full ${isElevated ? 'bg-red-500' : 'bg-emerald-400'}`}></span>
+                </div>
+                <div className="text-[11px] text-slate-400 font-mono mt-1">
+                  PM2.5: <span className={c.avg_pm25 > 60 ? 'text-amber-400 font-bold' : 'text-slate-200'}>{c.avg_pm25}</span>
+                </div>
+                <div className="text-[10px] mt-0.5 flex items-center justify-between">
+                  <span className={isElevated ? 'text-red-400 font-medium' : 'text-emerald-400 font-medium'}>
+                    {isElevated ? 'Elevated' : 'Lower'}
+                  </span>
+                  <span className="text-slate-500 font-mono">{c.observation_count} recs</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

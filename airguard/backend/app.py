@@ -76,9 +76,14 @@ def create_app():
     # =========================================================================
     @app.route("/api/analytics/rankings", methods=["GET"])
     def city_rankings_api():
-        limit = request.args.get("limit", default=15, type=int)
+        limit = request.args.get("limit", default=30, type=int)
         rankings = get_city_rankings(limit=limit)
         return json_response(rankings)
+
+    @app.route("/api/cities", methods=["GET"])
+    def cities_overview_api():
+        cities = get_city_rankings(limit=50)
+        return json_response(cities)
 
     @app.route("/api/analytics/trends", methods=["GET"])
     def trends_api():

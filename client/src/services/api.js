@@ -26,8 +26,9 @@ export const airguardApi = {
   // Dashboard Telemetry
   getDashboardStats: () => apiClient.get('/dashboard/stats'),
 
-  // Environmental Analytics
-  getCityRankings: (limit = 15) => apiClient.get(`/analytics/rankings?limit=${limit}`),
+  // Environmental Analytics & City Intelligence
+  getCities: () => apiClient.get('/cities'),
+  getCityRankings: (limit = 30) => apiClient.get(`/analytics/rankings?limit=${limit}`),
   getTrends: () => apiClient.get('/analytics/trends'),
   getCorrelations: () => apiClient.get('/analytics/correlations'),
 

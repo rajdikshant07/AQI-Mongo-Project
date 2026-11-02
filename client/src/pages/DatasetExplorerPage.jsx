@@ -13,9 +13,12 @@ import {
 import airguardApi from '../services/api';
 
 const CITIES = [
-  'All Cities', 'Delhi', 'Patna', 'Gurugram', 'Lucknow', 'Ahmedabad',
-  'Bengaluru', 'Mumbai', 'Chennai', 'Kolkata', 'Hyderabad', 'Jaipur',
-  'Amritsar', 'Thiruvananthapuram', 'Visakhapatnam', 'Bhopal', 'Chandigarh'
+  'All Cities',
+  'Ahmedabad', 'Aizawl', 'Amaravati', 'Amritsar', 'Bengaluru', 'Bhopal',
+  'Brajrajnagar', 'Chandigarh', 'Chennai', 'Coimbatore', 'Delhi', 'Ernakulam',
+  'Gurugram', 'Guwahati', 'Hyderabad', 'Jaipur', 'Jorapokhar', 'Kochi',
+  'Kolkata', 'Lucknow', 'Mumbai', 'Patna', 'Shillong', 'Talcher',
+  'Thiruvananthapuram', 'Visakhapatnam'
 ];
 
 export default function DatasetExplorerPage() {

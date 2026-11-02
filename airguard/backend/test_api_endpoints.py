@@ -61,8 +61,9 @@ def run_api_tests():
         d = res_stats["data"]
         print(f"           Records: {d['total_observations_processed']:,} | Stations: {d['monitoring_stations_count']} | Avg PM2.5: {d['averages']['pm25']} ug/m3")
 
-    # 3. Analytics
+    # 3. Analytics & Cities
     assert_endpoint("/api/analytics/rankings?limit=5")
+    assert_endpoint("/api/cities")
     assert_endpoint("/api/analytics/trends")
     assert_endpoint("/api/analytics/correlations")
 

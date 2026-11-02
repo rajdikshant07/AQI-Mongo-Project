@@ -92,8 +92,8 @@ def get_dashboard_summary():
     }
 
 
-def get_city_rankings(limit=15):
-    """Aggregates city-level air quality rankings."""
+def get_city_rankings(limit=30):
+    """Aggregates city-level air quality rankings and enriches with GIS metadata."""
     db = get_db()
     proc_coll = db[Config.COLL_PROCESSED_RECORDS]
     
@@ -103,6 +103,9 @@ def get_city_rankings(limit=15):
             "avg_pm25": {"$avg": "$features.pm25"},
             "avg_pm10": {"$avg": "$features.pm10"},
             "avg_no2": {"$avg": "$features.no2"},
+            "avg_so2": {"$avg": "$features.so2"},
+            "avg_co": {"$avg": "$features.co"},
+            "avg_o3": {"$avg": "$features.o3"},
             "avg_aqi": {"$avg": "$ground_truth.aqi"},
             "elevated_risk_rate": {"$avg": "$ground_truth.air_quality_risk"},
             "observation_count": {"$sum": 1}
@@ -115,12 +118,30 @@ def get_city_rankings(limit=15):
             "avg_pm25": {"$round": ["$avg_pm25", 2]},
             "avg_pm10": {"$round": ["$avg_pm10", 2]},
             "avg_no2": {"$round": ["$avg_no2", 2]},
+            "avg_so2": {"$round": ["$avg_so2", 2]},
+            "avg_co": {"$round": ["$avg_co", 2]},
+            "avg_o3": {"$round": ["$avg_o3", 2]},
             "avg_aqi": {"$round": ["$avg_aqi", 2]},
             "elevated_risk_rate": {"$round": [{"$multiply": ["$elevated_risk_rate", 100]}, 2]},
             "observation_count": 1
         }}
     ]
-    return list(proc_coll.aggregate(pipeline))
+    cities = list(proc_coll.aggregate(pipeline))
+    
+    # Enrich with geospatial coordinates from monitoring_stations
+    try:
+        stations = {s["city"]: s for s in db[Config.COLL_MONITORING_STATIONS].find({}, {"_id": 0})}
+        for c in cities:
+            st = stations.get(c["city"], {})
+            c["latitude"] = st.get("latitude")
+            c["longitude"] = st.get("longitude")
+            c["state"] = st.get("state", "India")
+            c["risk_class"] = 1 if c.get("elevated_risk_rate", 0) >= 50.0 else 0
+            c["risk_label"] = "Elevated Risk" if c.get("elevated_risk_rate", 0) >= 50.0 else "Lower Risk"
+    except Exception:
+        pass
+        
+    return cities
 
 
 def get_monthly_and_seasonal_trends():
