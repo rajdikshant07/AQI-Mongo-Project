@@ -1,0 +1,193 @@
+{
+    "dataset_name": "CPCB India Air Quality Dataset (2015-2020)",
+    "source": "Central Pollution Control Board (CPCB), Government of India",
+    "curator": "Rohan Rao (Kaggle / OGD India)",
+    "file_name": "city_day.csv",
+    "total_records": 29531,
+    "total_columns": 16,
+    "columns": [
+        "City",
+        "Date",
+        "PM2.5",
+        "PM10",
+        "NO",
+        "NO2",
+        "NOx",
+        "NH3",
+        "CO",
+        "SO2",
+        "O3",
+        "Benzene",
+        "Toluene",
+        "Xylene",
+        "AQI",
+        "AQI_Bucket",
+        "Date_dt"
+    ],
+    "temporal_range": {
+        "start": "2015-01-01",
+        "end": "2020-07-01"
+    },
+    "unique_cities_count": 26,
+    "unique_cities": [
+        "Ahmedabad",
+        "Aizawl",
+        "Amaravati",
+        "Amritsar",
+        "Bengaluru",
+        "Bhopal",
+        "Brajrajnagar",
+        "Chandigarh",
+        "Chennai",
+        "Coimbatore",
+        "Delhi",
+        "Ernakulam",
+        "Gurugram",
+        "Guwahati",
+        "Hyderabad",
+        "Jaipur",
+        "Jorapokhar",
+        "Kochi",
+        "Kolkata",
+        "Lucknow",
+        "Mumbai",
+        "Patna",
+        "Shillong",
+        "Talcher",
+        "Thiruvananthapuram",
+        "Visakhapatnam"
+    ],
+    "duplicate_records": 0,
+    "missing_value_summary": {
+        "City": {
+            "missing_count": 0,
+            "missing_percentage": 0.0
+        },
+        "Date": {
+            "missing_count": 0,
+            "missing_percentage": 0.0
+        },
+        "PM2.5": {
+            "missing_count": 4598,
+            "missing_percentage": 15.57
+        },
+        "PM10": {
+            "missing_count": 11140,
+            "missing_percentage": 37.72
+        },
+        "NO": {
+            "missing_count": 3582,
+            "missing_percentage": 12.13
+        },
+        "NO2": {
+            "missing_count": 3585,
+            "missing_percentage": 12.14
+        },
+        "NOx": {
+            "missing_count": 4185,
+            "missing_percentage": 14.17
+        },
+        "NH3": {
+            "missing_count": 10328,
+            "missing_percentage": 34.97
+        },
+        "CO": {
+            "missing_count": 2059,
+            "missing_percentage": 6.97
+        },
+        "SO2": {
+            "missing_count": 3854,
+            "missing_percentage": 13.05
+        },
+        "O3": {
+            "missing_count": 4022,
+            "missing_percentage": 13.62
+        },
+        "Benzene": {
+            "missing_count": 5623,
+            "missing_percentage": 19.04
+        },
+        "Toluene": {
+            "missing_count": 8041,
+            "missing_percentage": 27.23
+        },
+        "Xylene": {
+            "missing_count": 18109,
+            "missing_percentage": 61.32
+        },
+        "AQI": {
+            "missing_count": 4681,
+            "missing_percentage": 15.85
+        },
+        "AQI_Bucket": {
+            "missing_count": 4681,
+            "missing_percentage": 15.85
+        }
+    },
+    "pollutant_statistics": {
+        "PM2.5": {
+            "mean": 67.45,
+            "std": 64.66,
+            "min": 0.04,
+            "q25": 28.82,
+            "median": 48.57,
+            "q75": 80.59,
+            "max": 949.99
+        },
+        "PM10": {
+            "mean": 118.13,
+            "std": 90.61,
+            "min": 0.01,
+            "q25": 56.25,
+            "median": 95.68,
+            "q75": 149.75,
+            "max": 1000.0
+        },
+        "NO2": {
+            "mean": 28.56,
+            "std": 24.47,
+            "min": 0.01,
+            "q25": 11.75,
+            "median": 21.69,
+            "q75": 37.62,
+            "max": 362.21
+        },
+        "SO2": {
+            "mean": 14.53,
+            "std": 18.13,
+            "min": 0.01,
+            "q25": 5.67,
+            "median": 9.16,
+            "q75": 15.22,
+            "max": 193.86
+        },
+        "CO": {
+            "mean": 2.25,
+            "std": 6.96,
+            "min": 0.0,
+            "q25": 0.51,
+            "median": 0.89,
+            "q75": 1.45,
+            "max": 175.81
+        },
+        "O3": {
+            "mean": 34.49,
+            "std": 21.69,
+            "min": 0.01,
+            "q25": 18.86,
+            "median": 30.84,
+            "q75": 45.57,
+            "max": 257.73
+        }
+    },
+    "target_variable": {
+        "name": "air_quality_risk",
+        "derivation_rule": "AQI > 100 => 1 (Elevated Risk), AQI <= 100 => 0 (Lower Risk)",
+        "ground_truth_source": "CPCB National Air Quality Index (NAQI)",
+        "class_0_count": 9565,
+        "class_0_percentage": 38.49,
+        "class_1_count": 15285,
+        "class_1_percentage": 61.51,
+        "leakage_prevention": "AQI and AQI_Bucket must be strictly dropped from feature matrix X."
+    }
+}

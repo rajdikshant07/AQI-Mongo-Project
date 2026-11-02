@@ -1,0 +1,22 @@
+# AirGuard: Comprehensive Dependencies
+# Core Data Science & Numerical Computing
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Database & Driver
+pymongo>=4.6.0
+
+# Machine Learning & Modeling
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# Visualization & Exploratory Data Analysis
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Web Backend & API Services
+Flask>=3.0.0
+Flask-Cors>=4.0.0
+python-dotenv>=1.0.0
+requests>=2.31.0

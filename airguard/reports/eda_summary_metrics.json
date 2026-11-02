@@ -1,0 +1,36 @@
+{
+    "total_records": 24850,
+    "target_distribution": {
+        "class_0_lower_risk": 9565,
+        "class_1_elevated_risk": 15285,
+        "class_0_pct": 38.49,
+        "class_1_pct": 61.51
+    },
+    "target_correlations_ranked": {
+        "pm10": 0.5123,
+        "pm25": 0.5029,
+        "no2": 0.3423,
+        "nox": 0.3343,
+        "no": 0.289,
+        "o3": 0.2788,
+        "so2": 0.2543,
+        "pm_ratio": 0.2162,
+        "co": 0.202,
+        "combustion_index": 0.1513,
+        "nh3": 0.1406,
+        "nitrogen_ratio": -0.0824
+    },
+    "seasonal_risk_rates": {
+        "winter_pct": 81.63,
+        "summer_pct": 60.81,
+        "monsoon_pct": 39.79,
+        "post_monsoon_pct": 73.75
+    },
+    "top_5_polluted_cities_pm25": {
+        "Patna": 123.27,
+        "Delhi": 116.36,
+        "Gurugram": 112.4,
+        "Lucknow": 109.0,
+        "Ahmedabad": 67.86
+    }
+}
